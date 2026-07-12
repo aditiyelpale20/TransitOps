@@ -2,7 +2,7 @@
 
 <p align="center">
   <h3>🚀 Intelligent Fleet & Transport Management System</h3>
-  <p>Built with ❤️ using <b>React + FastAPI + SQLAlchemy + MySQL/SQLite</b></p>
+  <p>Built using <b>React + FastAPI + SQLAlchemy + MySQL/SQLite</b></p>
 </p>
 
 ---
@@ -127,5 +127,5 @@ This project is intended for educational and demonstration purposes.
 ---
 
 <p align="center">
-Made with ❤️ for Smart Transportation 🚍
+Made for Smart Transportation 🚍
 </p>
