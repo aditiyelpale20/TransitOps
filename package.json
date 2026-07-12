@@ -1,0 +1,9 @@
+{
+  "name": "transitops-backend",
+  "version": "1.0.0",
+  "description": "FastAPI backend services for TransitOps Transport Management System",
+  "scripts": {
+    "start": "uvicorn app.main:app --reload",
+    "seed": "python -c \"import sys; sys.path.append('.'); from app.seed.seed import seed_database; seed_database()\""
+  }
+}
