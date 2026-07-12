@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { FiPlus, FiTrash2, FiTrendingUp, FiCreditCard, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiTrendingUp, FiCreditCard } from 'react-icons/fi';
+import { FaRupeeSign } from 'react-icons/fa';
 import { fuelAPI, expensesAPI, vehiclesAPI } from '../../services/api';
 import Table from '../../components/Common/Table';
 import Badge from '../../components/Common/Badge';
@@ -158,7 +159,7 @@ const FuelExpenses = () => {
           title="Aggregate Fuel Bill"
           value={`₹${totalFuelCost.toLocaleString()}`}
           statusText="Total spent on diesel logs"
-          icon={FiDollarSign}
+          icon={FaRupeeSign}
           iconColor="text-emerald-400 bg-emerald-500/10"
         />
         <StatsCard

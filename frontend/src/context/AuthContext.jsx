@@ -7,27 +7,28 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const logout = () => {
+    localStorage.removeItem('transitops_token');
+    localStorage.removeItem('transitops_user');
+    setUser(null);
+  };
+
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('transitops_token');
-      const savedUser = localStorage.getItem('transitops_user');
-      
-      if (token && savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-          // Refresh user data from API silently
-          const currentUser = await authAPI.getMe();
-          setUser(currentUser);
-          localStorage.setItem('transitops_user', JSON.stringify(currentUser));
-        } catch (err) {
-          console.error("Failed to restore authenticated session", err);
-          logout();
-        }
-      }
-      setLoading(false);
+    // Clear session on app startup to always present the login page first
+    localStorage.removeItem('transitops_token');
+    localStorage.removeItem('transitops_user');
+    setUser(null);
+    setLoading(false);
+
+    const handleLogoutEvent = () => {
+      logout();
     };
 
-    initAuth();
+    window.addEventListener('auth:logout', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('auth:logout', handleLogoutEvent);
+    };
   }, []);
 
   const login = async (email, password) => {
@@ -51,12 +52,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('transitops_token');
-    localStorage.removeItem('transitops_user');
-    setUser(null);
   };
 
   return (

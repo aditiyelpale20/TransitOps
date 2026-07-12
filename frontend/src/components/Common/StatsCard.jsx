@@ -10,14 +10,14 @@ const StatsCard = ({
   className = ''
 }) => {
   return (
-    <div className={`bg-slate-900 border border-brand-border rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-800 transition-all ${className}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+    <div className={`bg-slate-900 border border-brand-border rounded-xl p-4 shadow-lg flex flex-col justify-between hover:border-slate-850 transition-all hover:shadow-xl ${className}`}>
+      <div className="flex items-start justify-between gap-1.5 w-full">
+        <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 leading-tight block break-words min-w-0 flex-1">
           {title}
         </span>
         {Icon && (
-          <div className={`p-2 rounded-lg ${iconColor}`}>
-            <Icon className="h-4.5 w-4.5" />
+          <div className={`p-1.5 rounded-lg shrink-0 ${iconColor} flex items-center justify-center`}>
+            <Icon className="h-4 w-4" />
           </div>
         )}
       </div>

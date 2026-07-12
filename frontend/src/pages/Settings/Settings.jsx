@@ -1,11 +1,78 @@
-import React from 'react';
-import { FiSave, FiLock, FiCheck, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiSave, FiLock, FiCheck, FiEye, FiUserPlus, FiTrash2 } from 'react-icons/fi';
 import Card from '../../components/Common/Card';
 import Button from '../../components/Common/Button';
 import Input from '../../components/Common/Input';
 import Select from '../../components/Common/Select';
+import { authAPI, usersAPI } from '../../services/api';
 
 const Settings = () => {
+  const loggedInUser = JSON.parse(localStorage.getItem('transitops_user') || '{}');
+  const isManager = loggedInUser.role === 'Fleet Manager';
+
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'Dispatcher'
+  });
+  const [registerLoading, setRegisterLoading] = useState(false);
+
+  const [usersList, setUsersList] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  const fetchUsers = async () => {
+    if (!isManager) return;
+    setUsersLoading(true);
+    try {
+      const data = await usersAPI.list();
+      setUsersList(data || []);
+    } catch (err) {
+      console.error("Failed to load users list", err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleDeleteUser = async (id, name) => {
+    if (id === loggedInUser.id) {
+      alert("Self deletion is prohibited.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete the user account for ${name}?`)) {
+      try {
+        await usersAPI.delete(id);
+        fetchUsers();
+      } catch (err) {
+        alert(err.response?.data?.detail || "Failed to delete user account.");
+      }
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setRegisterLoading(true);
+    try {
+      await authAPI.register(registerForm);
+      alert(`Successfully registered ${registerForm.name} as ${registerForm.role}!`);
+      setRegisterForm({
+        name: '',
+        email: '',
+        password: '',
+        role: 'Dispatcher'
+      });
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to register staff account.");
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
   const permissions = [
     { role: 'Fleet Manager', description: 'Full Operational Control', fleet: 'full', drivers: 'full', trips: 'full', fuel: 'view', analytics: 'full' },
     { role: 'Dispatcher', description: 'Daily Trip Logistics', fleet: 'view', drivers: 'view', trips: 'full', fuel: 'none', analytics: 'view' },
@@ -51,7 +118,7 @@ const Settings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Depot configuration settings matching mockups */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           <Card title="Depot Settings" subtitle="Configure main operational center">
             <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Depot configuration updated successfully."); }}>
               <Input
@@ -99,6 +166,52 @@ const Settings = () => {
               </Button>
             </form>
           </Card>
+
+          {isManager && (
+            <Card title="Register Depot Account" subtitle="Create system login for new staff">
+              <form className="space-y-4" onSubmit={handleRegisterSubmit}>
+                <Input
+                  label="Full Name"
+                  placeholder="e.g. Rajesh Kumar"
+                  value={registerForm.name}
+                  onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Email Address"
+                  type="email"
+                  placeholder="e.g. rajesh@transitops.com"
+                  value={registerForm.email}
+                  onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Minimum 6 characters"
+                  value={registerForm.password}
+                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                  required
+                />
+                <Select
+                  label="System Role"
+                  options={["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"]}
+                  value={registerForm.role}
+                  onChange={(e) => setRegisterForm({ ...registerForm, role: e.target.value })}
+                  placeholder=""
+                />
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  className="w-full font-black uppercase text-xs py-2.5 mt-2" 
+                  icon={FiUserPlus}
+                  disabled={registerLoading}
+                >
+                  {registerLoading ? 'Registering...' : 'Register Account'}
+                </Button>
+              </form>
+            </Card>
+          )}
         </div>
 
         {/* Access Matrix controls matching mockups */}
@@ -152,6 +265,68 @@ const Settings = () => {
             </div>
 
           </div>
+
+          {/* Registered Depot Users Table */}
+          {isManager && (
+            <div className="bg-slate-900 border border-brand-border rounded-xl p-5 shadow-lg space-y-4">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-350">
+                  Depot Staff Directory
+                </h3>
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">
+                  Currently active user accounts registered in transitops database
+                </p>
+              </div>
+
+              {usersLoading ? (
+                <div className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center py-4">
+                  Loading database accounts...
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-brand-border bg-slate-950">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-900 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-brand-border">
+                      <tr>
+                        <th className="px-4 py-3">Full Name</th>
+                        <th className="px-4 py-3">Email Address</th>
+                        <th className="px-4 py-3">System Role</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brand-border/60">
+                      {usersList.map((usr) => (
+                        <tr key={usr.id} className="hover:bg-slate-900/10 transition-colors">
+                          <td className="px-4 py-3 text-slate-200 font-bold uppercase">
+                            {usr.name} {usr.id === loggedInUser.id && <span className="text-[8px] text-slate-500 font-normal lowercase">(you)</span>}
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">
+                            {usr.email}
+                          </td>
+                          <td className="px-4 py-3 text-brand-accent font-extrabold uppercase text-[10px]">
+                            {usr.role}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={() => handleDeleteUser(usr.id, usr.name)}
+                              disabled={usr.id === loggedInUser.id}
+                              className={`p-1.5 rounded transition-colors ${
+                                usr.id === loggedInUser.id
+                                  ? 'opacity-30 cursor-not-allowed text-slate-650'
+                                  : 'bg-red-950/20 border border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/40'
+                              }`}
+                              title={usr.id === loggedInUser.id ? "Cannot delete self" : "Revoke access"}
+                            >
+                              <FiTrash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
       </div>
